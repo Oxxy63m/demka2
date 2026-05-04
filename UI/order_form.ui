@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- order_form.ui -->
+<ui version="4.0">
+ <class>OrderEditWindow</class>
+ <widget class="QDialog" name="OrderEditWindow">
+  <property name="windowTitle"><string>Заказ</string></property>
+  <property name="minimumSize"><size><width>520</width><height>420</height></size></property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <item>
+    <widget class="QGroupBox" name="left_group">
+     <property name="title"><string>Данные заказа</string></property>
+     <layout class="QFormLayout" name="formLayout">
+      <item row="0" column="0"><widget class="QLabel" name="lbl_id"><property name="text"><string>ID:</string></property><property name="wordWrap"><bool>true</bool></property></widget></item>
+      <item row="0" column="1"><widget class="QLineEdit" name="id_edit"><property name="readOnly"><bool>true</bool></property></widget></item>
+      <item row="1" column="0"><widget class="QLabel" name="lbl_article"><property name="text"><string>Позиции заказа:</string></property><property name="wordWrap"><bool>true</bool></property></widget></item>
+      <item row="1" column="1"><widget class="QPlainTextEdit" name="article_edit"><property name="minimumSize"><size><width>0</width><height>88</height></size></property><property name="tabChangesFocus"><bool>true</bool></property><property name="placeholderText"><string>Артикул, количество, артикул, количество… (можно вставить из Excel)</string></property></widget></item>
+      <item row="2" column="0" colspan="2"><widget class="QLabel" name="lbl_article_hint"><property name="text"><string>Формат как при импорте: значения через запятую. Если количество не указано, берётся 1. Несколько строк из Excel можно вставить сразу — переносы станут запятыми.</string></property><property name="wordWrap"><bool>true</bool></property><property name="styleSheet"><string>color: #555555;</string></property></widget></item>
+      <item row="3" column="0"><widget class="QLabel" name="lbl_status"><property name="text"><string>Статус:</string></property><property name="wordWrap"><bool>true</bool></property></widget></item>
+      <item row="3" column="1"><widget class="QComboBox" name="status_combo"/></item>
+      <item row="4" column="0"><widget class="QLabel" name="lbl_pickup"><property name="text"><string>Адрес пункта выдачи:</string></property><property name="wordWrap"><bool>true</bool></property></widget></item>
+      <item row="4" column="1"><widget class="QComboBox" name="pickup_combo"/></item>
+      <item row="5" column="0"><widget class="QLabel" name="lbl_order_date"><property name="text"><string>Дата заказа:</string></property><property name="wordWrap"><bool>true</bool></property></widget></item>
+      <item row="5" column="1"><widget class="QDateEdit" name="order_date_edit"><property name="calendarPopup"><bool>true</bool></property></widget></item>
+      <item row="6" column="0"><widget class="QLabel" name="lbl_receiver"><property name="text"><string>Код для получения:</string></property><property name="wordWrap"><bool>true</bool></property></widget></item>
+      <item row="6" column="1"><widget class="QLineEdit" name="receiver_edit"/></item>
+      <item row="7" column="0"><widget class="QLabel" name="lbl_client"><property name="text"><string>Клиент (ФИО):</string></property><property name="wordWrap"><bool>true</bool></property></widget></item>
+      <item row="7" column="1"><widget class="QLineEdit" name="client_edit"><property name="readOnly"><bool>true</bool></property></widget></item>
+     </layout>
+    </widget>
+   </item>
+   <item>
+    <widget class="QGroupBox" name="right_group">
+     <property name="title"><string>Выдача</string></property>
+     <layout class="QFormLayout" name="right_form">
+      <item row="0" column="0"><widget class="QLabel" name="lbl_delivery"><property name="text"><string>Дата выдачи:</string></property><property name="wordWrap"><bool>true</bool></property></widget></item>
+      <item row="0" column="1"><widget class="QDateEdit" name="delivery_date_edit"><property name="calendarPopup"><bool>true</bool></property></widget></item>
+     </layout>
+    </widget>
+   </item>
+   <item>
+    <layout class="QHBoxLayout" name="hl_buttons">
+     <item><widget class="QPushButton" name="btn_save"><property name="text"><string>Сохранить</string></property></widget></item>
+     <item><widget class="QPushButton" name="btn_cancel"><property name="text"><string>Отмена</string></property></widget></item>
+    </layout>
+   </item>
+  </layout>
+ </widget>
+ <resources/><connections/>
+</ui>

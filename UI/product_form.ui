@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- product_form.ui -->
+<ui version="4.0">
+ <class>ProductEditWindow</class>
+ <widget class="QDialog" name="ProductEditWindow">
+  <property name="windowTitle"><string>Товар</string></property>
+  <property name="windowModality">
+   <enum>Qt::WindowModality::WindowModal</enum>
+  </property>
+  <property name="minimumSize"><size><width>560</width><height>520</height></size></property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <item>
+    <widget class="QGroupBox" name="data_group">
+     <property name="title"><string>Данные товара</string></property>
+     <layout class="QVBoxLayout" name="data_layout">
+      <item>
+       <layout class="QHBoxLayout" name="row_id">
+        <item><widget class="QLabel" name="lbl_id"><property name="text"><string>ID:</string></property><property name="wordWrap"><bool>true</bool></property></widget></item>
+        <item><widget class="QLineEdit" name="id_edit"><property name="readOnly"><bool>true</bool></property></widget></item>
+       </layout>
+      </item>
+      <item>
+       <widget class="QGroupBox" name="photo_group">
+        <property name="title"><string>Фото</string></property>
+        <layout class="QVBoxLayout" name="photo_layout">
+         <item><widget class="QLabel" name="photo_label"><property name="minimumSize"><size><width>300</width><height>200</height></size></property></widget></item>
+         <item><widget class="QPushButton" name="btn_photo"><property name="text"><string>Добавить изображение</string></property></widget></item>
+        </layout>
+       </widget>
+      </item>
+      <item>
+       <layout class="QFormLayout" name="formLayout">
+        <item row="0" column="0"><widget class="QLabel" name="lbl_article"><property name="text"><string>Артикул:</string></property><property name="wordWrap"><bool>true</bool></property></widget></item>
+        <item row="0" column="1"><widget class="QLineEdit" name="article_edit"/></item>
+        <item row="1" column="0"><widget class="QLabel" name="lbl_name"><property name="text"><string>Наименование:</string></property><property name="wordWrap"><bool>true</bool></property></widget></item>
+        <item row="1" column="1"><widget class="QLineEdit" name="name_edit"/></item>
+        <item row="2" column="0"><widget class="QLabel" name="lbl_category"><property name="text"><string>Категория:</string></property><property name="wordWrap"><bool>true</bool></property></widget></item>
+        <item row="2" column="1"><widget class="QComboBox" name="category_combo"><property name="editable"><bool>true</bool></property></widget></item>
+        <item row="3" column="0"><widget class="QLabel" name="lbl_desc"><property name="text"><string>Описание:</string></property><property name="wordWrap"><bool>true</bool></property></widget></item>
+        <item row="3" column="1"><widget class="QPlainTextEdit" name="desc_edit"><property name="maximumBlockCount"><number>0</number></property><property name="minimumSize"><size><width>200</width><height>80</height></size></property></widget></item>
+        <item row="4" column="0"><widget class="QLabel" name="lbl_manuf"><property name="text"><string>Производитель:</string></property><property name="wordWrap"><bool>true</bool></property></widget></item>
+        <item row="4" column="1"><widget class="QComboBox" name="manuf_combo"><property name="editable"><bool>true</bool></property></widget></item>
+        <item row="5" column="0"><widget class="QLabel" name="lbl_supp"><property name="text"><string>Поставщик:</string></property><property name="wordWrap"><bool>true</bool></property></widget></item>
+        <item row="5" column="1"><widget class="QLineEdit" name="supp_edit"/></item>
+        <item row="6" column="0"><widget class="QLabel" name="lbl_price"><property name="text"><string>Цена:</string></property><property name="wordWrap"><bool>true</bool></property></widget></item>
+        <item row="6" column="1"><widget class="QDoubleSpinBox" name="price_spin"><property name="decimals"><number>2</number></property><property name="maximum"><double>99999999.990000001490116119384765625</double></property><property name="minimum"><double>0.000000000000000000000000000000000</double></property></widget></item>
+        <item row="7" column="0"><widget class="QLabel" name="lbl_unit"><property name="text"><string>Единица:</string></property><property name="wordWrap"><bool>true</bool></property></widget></item>
+        <item row="7" column="1"><widget class="QLineEdit" name="unit_edit"/></item>
+        <item row="8" column="0"><widget class="QLabel" name="lbl_qty"><property name="text"><string>Количество:</string></property><property name="wordWrap"><bool>true</bool></property></widget></item>
+        <item row="8" column="1"><widget class="QSpinBox" name="qty_spin"><property name="maximum"><number>999999999</number></property><property name="minimum"><number>0</number></property></widget></item>
+        <item row="9" column="0"><widget class="QLabel" name="lbl_discount"><property name="text"><string>Скидка, %:</string></property><property name="wordWrap"><bool>true</bool></property></widget></item>
+        <item row="9" column="1"><widget class="QDoubleSpinBox" name="discount_spin"><property name="decimals"><number>2</number></property><property name="maximum"><double>100.000000000000000000000000000000000</double></property><property name="minimum"><double>0.000000000000000000000000000000000</double></property></widget></item>
+       </layout>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
+    <layout class="QHBoxLayout" name="hl_buttons">
+     <item><widget class="QPushButton" name="btn_save"><property name="text"><string>Сохранить</string></property></widget></item>
+     <item><widget class="QPushButton" name="btn_cancel"><property name="text"><string>Отмена</string></property></widget></item>
+    </layout>
+   </item>
+  </layout>
+ </widget>
+ <resources/><connections/>
+</ui>
