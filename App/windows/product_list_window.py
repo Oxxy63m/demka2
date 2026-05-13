@@ -62,15 +62,16 @@ class ProductListWindow(QMainWindow):
         is_guest_or_client = role in ("guest", "client")
         is_manager = role == "manager"
         is_admin = role == "administrator"
+        can_edit_products = is_manager or is_admin
 
         # фильтры только менеджер/админ
         for w in [self.ui.lbl_search, self.ui.search_edit, self.ui.lbl_supplier, self.ui.supplier_combo, self.ui.lbl_sort, self.ui.sort_combo]:
             w.setVisible(not is_guest_or_client)
             w.setEnabled(not is_guest_or_client)
 
-        # добавить/удалить/редактировать — только админ
-        self.ui.btn_add.setVisible(is_admin)
-        self.ui.btn_add.setEnabled(is_admin)
+        # каталог: добавить / карточки — менеджер и администратор
+        self.ui.btn_add.setVisible(can_edit_products)
+        self.ui.btn_add.setEnabled(can_edit_products)
 
         # заказы — менеджер/админ
         self.ui.btn_orders.setVisible(is_manager or is_admin)
@@ -141,13 +142,14 @@ class ProductListWindow(QMainWindow):
             card.setStyleSheet("background-color: #2E8B57;")  # зелёный
 
         # удалить
-        is_admin = (self._user.role or "") == "administrator"
-        card.btn_delete.setVisible(is_admin)
-        card.btn_delete.setEnabled(is_admin)
+        role = (self._user.role or "").strip()
+        can_edit_products = role in ("manager", "administrator")
+        card.btn_delete.setVisible(can_edit_products)
+        card.btn_delete.setEnabled(can_edit_products)
         card.btn_delete.clicked.connect(partial(self._delete_product, pid))
 
-        # клик по карточке → редактирование (только админ)
-        if is_admin:
+        # клик по карточке → редактирование (менеджер и администратор)
+        if can_edit_products:
             flt = _ClickFilter(partial(self._edit_product, pid))
             card.installEventFilter(flt)
             card._flt = flt  # чтобы не удалился GC
@@ -194,16 +196,36 @@ class ProductListWindow(QMainWindow):
         if self._edit_dialog is not None and self._edit_dialog.isVisible():
             QMessageBox.information(self, "Редактирование", "Окно редактирования уже открыто.")
             return
-        prod = get_product(product_id)
-        self._edit_dialog = ProductEditWindow(product=prod, is_admin=True, on_saved=lambda _pid: self._refresh_products())
-        self._edit_dialog.exec()
+        try:
+            prod = get_product(product_id)
+            self._edit_dialog = ProductEditWindow(
+                product=prod,
+                is_admin=True,
+                on_saved=lambda _pid: self._refresh_products(),
+                parent=self,
+            )
+            self._edit_dialog.exec()
+        except Exception as e:
+            QMessageBox.critical(self, "Ошибка", str(e))
+        finally:
+            self._edit_dialog = None
 
     def _add_product(self):
         if self._edit_dialog is not None and self._edit_dialog.isVisible():
             QMessageBox.information(self, "Добавление", "Окно редактирования уже открыто.")
             return
-        self._edit_dialog = ProductEditWindow(product=None, is_admin=True, on_saved=lambda _pid: self._refresh_products())
-        self._edit_dialog.exec()
+        try:
+            self._edit_dialog = ProductEditWindow(
+                product=None,
+                is_admin=True,
+                on_saved=lambda _pid: self._refresh_products(),
+                parent=self,
+            )
+            self._edit_dialog.exec()
+        except Exception as e:
+            QMessageBox.critical(self, "Ошибка", str(e))
+        finally:
+            self._edit_dialog = None
 
     def _open_orders(self):
         self._on_open_orders()

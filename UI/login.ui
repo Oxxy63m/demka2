@@ -1,5 +1,4 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- login.ui -->
 <ui version="4.0">
  <class>LoginWindow</class>
  <widget class="QDialog" name="LoginWindow">
@@ -7,14 +6,14 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>440</width>
-    <height>320</height>
+    <width>614</width>
+    <height>405</height>
    </rect>
   </property>
   <property name="minimumSize">
    <size>
-    <width>440</width>
-    <height>320</height>
+    <width>500</width>
+    <height>405</height>
    </size>
   </property>
   <property name="windowTitle">

@@ -1,14 +1,14 @@
 from __future__ import annotations
 
-from PySide6.QtCore import QFile
+from PySide6.QtCore import QFile, QObject
 from PySide6.QtUiTools import QUiLoader
 from PySide6.QtWidgets import QWidget
 
 
 def _bind_children_as_attrs(root: QWidget) -> None:
-    # QUiLoader не создаёт Python-атрибуты для дочерних виджетов.
-    # Для простого учебного проекта удобно "пробиндить" их по objectName.
-    for ch in root.findChildren(QWidget):
+    # QUiLoader не создаёт Python-атрибуты для дочерних объектов.
+    # Ищем все QObject с objectName — включая QLayout (cards_layout, verticalLayout и т.д.).
+    for ch in root.findChildren(QObject):
         name = ch.objectName()
         if not name:
             continue

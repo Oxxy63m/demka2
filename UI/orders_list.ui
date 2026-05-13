@@ -4,6 +4,7 @@
  <class>OrderListWindow</class>
  <widget class="QMainWindow" name="OrderListWindow">
   <property name="windowTitle"><string>Заказы</string></property>
+  <property name="minimumSize"><size><width>720</width><height>520</height></size></property>
   <property name="windowModality">
    <enum>Qt::WindowModality::WindowModal</enum>
   </property>

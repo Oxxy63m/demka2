@@ -28,8 +28,17 @@ def list_categories() -> list[str]:
 
 def list_manufacturers() -> list[str]:
     t = tables()
+    m = t.products.c.product_manufac
     with session() as s:
-        q = select(t.products.c.product_manufac).distinct().order_by(func.lower(t.products.c.product_manufac).asc())
+        # DISTINCT + ORDER BY lower(...) недопустим в PostgreSQL без включения lower в SELECT;
+        # GROUP BY даёт те же уникальные значения и позволяет сортировку без регистра.
+        q = (
+            select(m)
+            .where(m.isnot(None))
+            .where(func.trim(m) != "")
+            .group_by(m)
+            .order_by(func.lower(m).asc())
+        )
         return [str(x[0]).strip() for x in s.execute(q).all() if x[0] is not None and str(x[0]).strip()]
 
 
@@ -88,10 +97,22 @@ def products_query(
 
 def get_product(product_id: int) -> dict | None:
     t = tables()
+    p = t.products.c
     with session() as s:
         q = (
             select(
-                t.products,
+                p.product_id,
+                p.product_art,
+                p.product_name,
+                p.product_unit,
+                p.product_price,
+                p.product_manufac,
+                p.product_discount,
+                p.product_stock,
+                p.product_desc,
+                p.product_photo,
+                p.categ_id,
+                p.supp_id,
                 t.categories.c.categ_name.label("categ_name"),
                 t.suppliers.c.supp_name.label("supp_name"),
             )

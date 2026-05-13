@@ -13,8 +13,8 @@ from App.ui_loader import load_ui
 
 
 class ProductEditWindow(QDialog):
-    def __init__(self, *, product: dict | None, is_admin: bool, on_saved):
-        super().__init__()
+    def __init__(self, *, product: dict | None, is_admin: bool, on_saved, parent=None):
+        super().__init__(parent)
         self._product = product
         self._is_admin = is_admin
         self._on_saved = on_saved

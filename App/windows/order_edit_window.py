@@ -11,11 +11,12 @@ from App.ui_loader import load_ui
 
 
 class OrderEditWindow(QDialog):
-    def __init__(self, *, order: dict | None, is_admin: bool, on_saved):
+    def __init__(self, *, order: dict | None, is_admin: bool, on_saved, default_client_name: str = ""):
         super().__init__()
         self._order = order
         self._is_admin = is_admin
         self._on_saved = on_saved
+        self._default_client_name = (default_client_name or "").strip()
 
         self.ui = load_ui(ui_path("order_form.ui"))
         self.setWindowTitle(self.ui.windowTitle())
@@ -42,6 +43,7 @@ class OrderEditWindow(QDialog):
             self.ui.order_date_edit,
             self.ui.delivery_date_edit,
             self.ui.receiver_edit,
+            self.ui.client_edit,
         ]:
             w.setEnabled(False)
 
@@ -57,7 +59,7 @@ class OrderEditWindow(QDialog):
     def _load_data(self):
         if self._order is None:
             self.ui.id_edit.setText("")
-            self.ui.client_edit.setText("—")
+            self.ui.client_edit.setText(self._default_client_name or "")
             self.ui.order_date_edit.setDate(QDate.currentDate())
             self.ui.delivery_date_edit.setDate(QDate.currentDate())
             return

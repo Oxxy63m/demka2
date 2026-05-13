@@ -120,7 +120,12 @@ class OrderListWindow(QMainWindow):
         if self._edit_dialog is not None and self._edit_dialog.isVisible():
             QMessageBox.information(self, "Добавление", "Окно редактирования уже открыто.")
             return
-        self._edit_dialog = OrderEditWindow(order=None, is_admin=True, on_saved=lambda _id: self._refresh())
+        self._edit_dialog = OrderEditWindow(
+            order=None,
+            is_admin=True,
+            on_saved=lambda _id: self._refresh(),
+            default_client_name=self._user.full_name or "",
+        )
         self._edit_dialog.exec()
 
     def _delete_selected(self):

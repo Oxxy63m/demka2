@@ -62,11 +62,18 @@ def list_orders() -> list[dict]:
 
 def get_order(order_id: int) -> dict | None:
     t = tables()
+    c = t.orders.c
     with session() as s:
         o = (
             s.execute(
                 select(
-                    t.orders,
+                    c.order_id,
+                    c.order_date,
+                    c.order_pup_date,
+                    c.order_pp_code,
+                    c.user_name,
+                    c.status_id,
+                    c.pp_id,
                     t.statuses.c.status_name.label("status_name"),
                     t.pickup_points.c.pp_name.label("pp_name"),
                 )

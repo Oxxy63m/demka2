@@ -21,6 +21,21 @@ ROLE_LABEL = {
 }
 
 
+def _normalize_role(raw: str | None) -> str:
+    """Приводит роль из БД к одному из guest/client/manager/administrator."""
+    s = (raw or "").strip().lower()
+    if not s:
+        return "client"
+    ru = {"администратор": "administrator", "менеджер": "manager", "клиент": "client", "гость": "guest"}
+    if s in ru:
+        return ru[s]
+    if s in ("administrator", "manager", "client", "guest"):
+        return s
+    if s in ("admin", "админ"):
+        return "administrator"
+    return "client"
+
+
 def authenticate(login: str, password: str) -> UserContext | None:
     login = (login or "").strip()
     password = (password or "").strip()
@@ -37,7 +52,7 @@ def authenticate(login: str, password: str) -> UserContext | None:
         r = s.execute(q).first()
         if not r:
             return None
-        role = (r[0] or "client").strip()
+        role = _normalize_role(r[0])
         full_name = (r[1] or "").strip()
         if not full_name:
             full_name = login

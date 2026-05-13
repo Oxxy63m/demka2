@@ -4,7 +4,7 @@
  <class>OrderEditWindow</class>
  <widget class="QDialog" name="OrderEditWindow">
   <property name="windowTitle"><string>Заказ</string></property>
-  <property name="minimumSize"><size><width>520</width><height>420</height></size></property>
+  <property name="minimumSize"><size><width>560</width><height>480</height></size></property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
     <widget class="QGroupBox" name="left_group">
@@ -22,9 +22,9 @@
       <item row="5" column="0"><widget class="QLabel" name="lbl_order_date"><property name="text"><string>Дата заказа:</string></property><property name="wordWrap"><bool>true</bool></property></widget></item>
       <item row="5" column="1"><widget class="QDateEdit" name="order_date_edit"><property name="calendarPopup"><bool>true</bool></property></widget></item>
       <item row="6" column="0"><widget class="QLabel" name="lbl_receiver"><property name="text"><string>Код для получения:</string></property><property name="wordWrap"><bool>true</bool></property></widget></item>
-      <item row="6" column="1"><widget class="QLineEdit" name="receiver_edit"/></item>
+      <item row="6" column="1"><widget class="QLineEdit" name="receiver_edit"><property name="minimumSize"><size><width>160</width><height>28</height></size></property></widget></item>
       <item row="7" column="0"><widget class="QLabel" name="lbl_client"><property name="text"><string>Клиент (ФИО):</string></property><property name="wordWrap"><bool>true</bool></property></widget></item>
-      <item row="7" column="1"><widget class="QLineEdit" name="client_edit"><property name="readOnly"><bool>true</bool></property></widget></item>
+      <item row="7" column="1"><widget class="QLineEdit" name="client_edit"><property name="minimumSize"><size><width>220</width><height>28</height></size></property><property name="placeholderText"><string>Фамилия Имя Отчество</string></property></widget></item>
      </layout>
     </widget>
    </item>
