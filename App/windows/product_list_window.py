@@ -2,11 +2,12 @@ from __future__ import annotations
 
 from functools import partial
 
-from PySide6.QtCore import QObject, Qt, QEvent
-from PySide6.QtGui import QFont, QIcon, QPixmap
-from PySide6.QtWidgets import QMainWindow, QMessageBox, QWidget
+from PySide6.QtCore import Qt
+from PySide6.QtGui import QFont, QPixmap
+from PySide6.QtWidgets import QMessageBox, QSizePolicy, QVBoxLayout, QWidget
 
 from App.auth_service import ROLE_LABEL, UserContext
+from App.ui_click import install_card_click
 from App.db import resolve_product_photo_path, session
 from App.paths import ui_path
 from App.product_service import delete_product, get_product, list_suppliers, products_query
@@ -14,19 +15,7 @@ from App.ui_loader import load_ui
 from App.windows.product_edit_window import ProductEditWindow
 
 
-class _ClickFilter(QObject):
-    def __init__(self, on_click):
-        super().__init__()
-        self._on_click = on_click
-
-    def eventFilter(self, watched, event):
-        if event.type() == QEvent.MouseButtonRelease and event.button() == Qt.LeftButton:
-            self._on_click()
-            return True
-        return False
-
-
-class ProductListWindow(QMainWindow):
+class ProductListWindow(QWidget):
     def __init__(self, *, user: UserContext, on_logout, on_open_orders):
         super().__init__()
         self._user = user
@@ -34,10 +23,16 @@ class ProductListWindow(QMainWindow):
         self._on_open_orders = on_open_orders
         self._edit_dialog: ProductEditWindow | None = None
 
-        self.ui = load_ui(ui_path("main.ui"))
-        self.setCentralWidget(self.ui.centralwidget)
-        self.setWindowTitle(self.ui.windowTitle())
-        self.setMinimumSize(self.ui.minimumSize())
+        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+
+        shell = load_ui(ui_path("main.ui"))
+        self.ui = shell
+        page = QVBoxLayout(self)
+        page.setContentsMargins(0, 0, 0, 0)
+        page.setSpacing(0)
+        page.addWidget(shell.centralwidget, 1)
+
+        self._setup_scroll_area()
 
         self.ui.btn_logout.clicked.connect(self._logout)
         self.ui.btn_orders.clicked.connect(self._open_orders)
@@ -51,8 +46,20 @@ class ProductListWindow(QMainWindow):
         self._fill_filter_controls()
         self._refresh_products()
 
-    def set_app_icon(self, icon: QIcon):
-        self.setWindowIcon(icon)
+    def set_user(self, user: UserContext):
+        self._user = user
+        self._apply_role_ui()
+
+    def _setup_scroll_area(self):
+        self.ui.cards_scroll.setWidgetResizable(True)
+        expand = QSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+        self.ui.cards_container.setSizePolicy(expand)
+        self.ui.cards_scroll.setSizePolicy(expand)
+        lay = self.ui.centralwidget.layout()
+        if lay is not None:
+            idx = lay.indexOf(self.ui.cards_scroll)
+            if idx >= 0:
+                lay.setStretch(idx, 1)
 
     def _apply_role_ui(self):
         role = (self._user.role or "guest").strip()
@@ -62,7 +69,7 @@ class ProductListWindow(QMainWindow):
         is_guest_or_client = role in ("guest", "client")
         is_manager = role == "manager"
         is_admin = role == "administrator"
-        can_edit_products = is_manager or is_admin
+        can_edit_products = is_admin
 
         # фильтры только менеджер/админ
         for w in [self.ui.lbl_search, self.ui.search_edit, self.ui.lbl_supplier, self.ui.supplier_combo, self.ui.lbl_sort, self.ui.sort_combo]:
@@ -143,16 +150,14 @@ class ProductListWindow(QMainWindow):
 
         # удалить
         role = (self._user.role or "").strip()
-        can_edit_products = role in ("manager", "administrator")
+        can_edit_products = role == "administrator"
         card.btn_delete.setVisible(can_edit_products)
         card.btn_delete.setEnabled(can_edit_products)
         card.btn_delete.clicked.connect(partial(self._delete_product, pid))
 
-        # клик по карточке → редактирование (менеджер и администратор)
+        # клик по карточке → редактирование (только администратор)
         if can_edit_products:
-            flt = _ClickFilter(partial(self._edit_product, pid))
-            card.installEventFilter(flt)
-            card._flt = flt  # чтобы не удалился GC
+            install_card_click(card, partial(self._edit_product, pid))
 
         # чуть компактнее
         f = card.font()
@@ -181,49 +186,52 @@ class ProductListWindow(QMainWindow):
         for r in rows:
             self.ui.cards_layout.insertWidget(self.ui.cards_layout.count() - 1, self._make_card(r))
 
+    def _window(self):
+        return self.window()
+
     def _delete_product(self, product_id: int):
-        r = QMessageBox.question(self, "Подтверждение", "Удалить товар? Это действие нельзя отменить.")
+        r = QMessageBox.question(self._window(), "Подтверждение", "Удалить товар? Это действие нельзя отменить.")
         if r != QMessageBox.Yes:
             return
         try:
             delete_product(product_id)
         except Exception as e:
-            QMessageBox.warning(self, "Удаление невозможно", str(e))
+            QMessageBox.warning(self._window(), "Удаление невозможно", str(e))
             return
         self._refresh_products()
 
     def _edit_product(self, product_id: int):
         if self._edit_dialog is not None and self._edit_dialog.isVisible():
-            QMessageBox.information(self, "Редактирование", "Окно редактирования уже открыто.")
+            QMessageBox.information(self._window(), "Редактирование", "Окно редактирования уже открыто.")
             return
         try:
             prod = get_product(product_id)
             self._edit_dialog = ProductEditWindow(
                 product=prod,
-                is_admin=True,
+                is_admin=(self._user.role or "").strip() == "administrator",
                 on_saved=lambda _pid: self._refresh_products(),
-                parent=self,
+                parent=self._window(),
             )
             self._edit_dialog.exec()
         except Exception as e:
-            QMessageBox.critical(self, "Ошибка", str(e))
+            QMessageBox.critical(self._window(), "Ошибка", str(e))
         finally:
             self._edit_dialog = None
 
     def _add_product(self):
         if self._edit_dialog is not None and self._edit_dialog.isVisible():
-            QMessageBox.information(self, "Добавление", "Окно редактирования уже открыто.")
+            QMessageBox.information(self._window(), "Добавление", "Окно редактирования уже открыто.")
             return
         try:
             self._edit_dialog = ProductEditWindow(
                 product=None,
                 is_admin=True,
                 on_saved=lambda _pid: self._refresh_products(),
-                parent=self,
+                parent=self._window(),
             )
             self._edit_dialog.exec()
         except Exception as e:
-            QMessageBox.critical(self, "Ошибка", str(e))
+            QMessageBox.critical(self._window(), "Ошибка", str(e))
         finally:
             self._edit_dialog = None
 

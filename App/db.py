@@ -87,6 +87,37 @@ def resolve_product_photo_path(photo_value: str | None) -> str:
 
 
 _SEP_RE = re.compile(r"[,\n;\t]+")
+_LINE_PAIR_RE = re.compile(r"^(\S+)\s+(\d+)\s*$")
+
+
+def normalize_article(art: str) -> str:
+    """Приводит артикул к виду для сравнения (пробелы, числовые артикулы «12345.0»)."""
+    s = str(art or "").replace("\u00a0", " ").strip()
+    if not s:
+        return s
+    try:
+        f = float(s.replace(",", ".").replace(" ", ""))
+        if f == int(f) and abs(f) < 1e15:
+            return str(int(f))
+    except ValueError:
+        pass
+    return s
+
+
+def find_product_id_by_art(s: Session, art: str) -> int | None:
+    norm = normalize_article(art)
+    if not norm:
+        return None
+    t = tables()
+    r = (
+        s.execute(
+            select(t.products.c.product_id).where(
+                func.lower(func.trim(t.products.c.product_art)) == norm.lower()
+            )
+        )
+        .scalar_one_or_none()
+    )
+    return int(r) if r is not None else None
 
 
 def parse_order_line_items(text_value: str) -> list[tuple[str, int]]:
@@ -101,6 +132,18 @@ def parse_order_line_items(text_value: str) -> list[tuple[str, int]]:
     if not raw:
         return []
     raw = raw.replace("\r", "\n")
+    if "\n" in raw:
+        out: list[tuple[str, int]] = []
+        for line in raw.split("\n"):
+            line = line.strip()
+            if line:
+                out.extend(parse_order_line_items(line))
+        return out
+
+    m = _LINE_PAIR_RE.match(raw)
+    if m:
+        return [(m.group(1), int(m.group(2)))]
+
     parts = [p.strip() for p in _SEP_RE.split(raw) if p is not None and str(p).strip()]
     out: list[tuple[str, int]] = []
     i = 0

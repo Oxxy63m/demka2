@@ -8,7 +8,7 @@ from PySide6.QtWidgets import QDialog, QFileDialog, QMessageBox, QVBoxLayout
 
 from App.db import resolve_product_photo_path
 from App.paths import ui_path
-from App.product_service import list_categories, list_manufacturers, next_product_id, upsert_product
+from App.product_service import list_categories, list_manufacturers, list_suppliers, list_units, next_product_id, upsert_product
 from App.ui_loader import load_ui
 
 
@@ -46,9 +46,9 @@ class ProductEditWindow(QDialog):
             self.ui.category_combo,
             self.ui.desc_edit,
             self.ui.manuf_combo,
-            self.ui.supp_edit,
+            self.ui.supp_combo,
             self.ui.price_spin,
-            self.ui.unit_edit,
+            self.ui.unit_combo,
             self.ui.qty_spin,
             self.ui.discount_spin,
         ]:
@@ -59,6 +59,10 @@ class ProductEditWindow(QDialog):
         self.ui.category_combo.addItems(list_categories())
         self.ui.manuf_combo.clear()
         self.ui.manuf_combo.addItems(list_manufacturers())
+        self.ui.supp_combo.clear()
+        self.ui.supp_combo.addItems(list_suppliers())
+        self.ui.unit_combo.clear()
+        self.ui.unit_combo.addItems(list_units())
 
     def _load_data(self):
         if self._product is None:
@@ -69,8 +73,12 @@ class ProductEditWindow(QDialog):
         self.ui.id_edit.setText(str(self._product.get("product_id", "")))
         self.ui.article_edit.setText(str(self._product.get("product_art", "") or ""))
         self.ui.name_edit.setText(str(self._product.get("product_name", "") or ""))
-        self.ui.unit_edit.setText(str(self._product.get("product_unit", "") or ""))
-        self.ui.supp_edit.setText(str(self._product.get("supp_name") or ""))
+        unit = str(self._product.get("product_unit") or "")
+        if unit:
+            self.ui.unit_combo.setCurrentText(unit)
+        supp = str(self._product.get("supp_name") or "")
+        if supp:
+            self.ui.supp_combo.setCurrentText(supp)
         self.ui.price_spin.setValue(float(self._product.get("product_price") or 0))
         self.ui.qty_spin.setValue(int(self._product.get("product_stock") or 0))
         self.ui.discount_spin.setValue(float(self._product.get("product_discount") or 0))
@@ -138,9 +146,9 @@ class ProductEditWindow(QDialog):
                 category_name=self.ui.category_combo.currentText().strip() or None,
                 description=self.ui.desc_edit.toPlainText(),
                 manufacturer=self.ui.manuf_combo.currentText().strip() or None,
-                supplier_name=self.ui.supp_edit.text().strip() or None,
+                supplier_name=self.ui.supp_combo.currentText().strip() or None,
                 price=float(self.ui.price_spin.value()),
-                unit=self.ui.unit_edit.text().strip() or "шт.",
+                unit=self.ui.unit_combo.currentText().strip() or "шт.",
                 qty=int(self.ui.qty_spin.value()),
                 discount=float(self.ui.discount_spin.value()),
                 photo_path_to_copy=self._pending_photo_file,

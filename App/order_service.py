@@ -5,7 +5,7 @@ from datetime import date
 from sqlalchemy import delete, func, select, update
 from sqlalchemy.exc import SQLAlchemyError
 
-from App.db import order_article_summary, parse_order_line_items, session, tables
+from App.db import find_product_id_by_art, order_article_summary, parse_order_line_items, session, tables
 
 
 def list_statuses() -> list[str]:
@@ -171,15 +171,19 @@ def upsert_order(
             # позиции: полностью пересоздаём
             s.execute(delete(t.order_items).where(t.order_items.c.order_id == order_id))
             pairs = parse_order_line_items(items_text)
+            if not pairs:
+                if (items_text or "").strip():
+                    raise ValueError(
+                        "Не удалось разобрать позиции. Формат: артикул, количество, артикул, количество… "
+                        "Или по одной паре «артикул количество» в строке."
+                    )
+                raise ValueError("Добавьте хотя бы одну позицию заказа (артикул и количество).")
             for art, qty in pairs:
-                r = (
-                    s.execute(select(t.products.c.product_id).where(func.trim(t.products.c.product_art) == art.strip()))
-                    .scalar_one_or_none()
-                )
-                if r is None:
-                    raise ValueError(f"Артикул «{art}» не найден в товарах.")
+                pid = find_product_id_by_art(s, art)
+                if pid is None:
+                    raise ValueError(f"Артикул «{art.strip()}» не найден в товарах.")
                 s.execute(
-                    t.order_items.insert().values(order_id=order_id, product_id=int(r), product_quantity=int(qty))
+                    t.order_items.insert().values(order_id=order_id, product_id=pid, product_quantity=int(qty))
                 )
 
             s.commit()

@@ -41,11 +41,11 @@
         <item row="4" column="0"><widget class="QLabel" name="lbl_manuf"><property name="text"><string>Производитель:</string></property><property name="wordWrap"><bool>true</bool></property></widget></item>
         <item row="4" column="1"><widget class="QComboBox" name="manuf_combo"><property name="editable"><bool>true</bool></property></widget></item>
         <item row="5" column="0"><widget class="QLabel" name="lbl_supp"><property name="text"><string>Поставщик:</string></property><property name="wordWrap"><bool>true</bool></property></widget></item>
-        <item row="5" column="1"><widget class="QLineEdit" name="supp_edit"/></item>
+        <item row="5" column="1"><widget class="QComboBox" name="supp_combo"><property name="editable"><bool>true</bool></property></widget></item>
         <item row="6" column="0"><widget class="QLabel" name="lbl_price"><property name="text"><string>Цена:</string></property><property name="wordWrap"><bool>true</bool></property></widget></item>
         <item row="6" column="1"><widget class="QDoubleSpinBox" name="price_spin"><property name="decimals"><number>2</number></property><property name="maximum"><double>99999999.990000001490116119384765625</double></property><property name="minimum"><double>0.000000000000000000000000000000000</double></property></widget></item>
         <item row="7" column="0"><widget class="QLabel" name="lbl_unit"><property name="text"><string>Единица:</string></property><property name="wordWrap"><bool>true</bool></property></widget></item>
-        <item row="7" column="1"><widget class="QLineEdit" name="unit_edit"/></item>
+        <item row="7" column="1"><widget class="QComboBox" name="unit_combo"><property name="editable"><bool>true</bool></property></widget></item>
         <item row="8" column="0"><widget class="QLabel" name="lbl_qty"><property name="text"><string>Количество:</string></property><property name="wordWrap"><bool>true</bool></property></widget></item>
         <item row="8" column="1"><widget class="QSpinBox" name="qty_spin"><property name="maximum"><number>999999999</number></property><property name="minimum"><number>0</number></property></widget></item>
         <item row="9" column="0"><widget class="QLabel" name="lbl_discount"><property name="text"><string>Скидка, %:</string></property><property name="wordWrap"><bool>true</bool></property></widget></item>

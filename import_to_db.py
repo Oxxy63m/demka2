@@ -1,13 +1,10 @@
 from __future__ import annotations
 
-# Импорт данных из Excel в БД (как в проекте ранее).
 # Запуск из корня: python import_to_db.py
-# Файлы клади в папку resources/ (DATA_DIR в App.config):
-#   user_import.xlsx, Tovar.xlsx, Заказ_import.xlsx, Пункты выдачи_import.xlsx
-# Позиции заказа (order_items) создаются из строки Заказ_import: колонка со строкой артикулов
+# Файлы в папку resources/ (DATA_DIR в App.config): пользователи, товары, заказы, пункты выдачи.
+# Позиции заказа (order_items): колонка со строкой артикулов
 #   («Строка заказа» / «Артикул заказа» / …) или пары «Номер товара» + «Количество».
-#
-# pip install pandas openpyxl psycopg2-binary
+
 
 import os
 import sys
@@ -17,7 +14,7 @@ import psycopg2
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from App.config import DB_CONFIG, DATA_DIR
-from App.db import parse_order_line_items
+from App.db import normalize_article, parse_order_line_items
 
 _ROOT = os.path.dirname(os.path.abspath(__file__))
 _DATA = os.path.normpath(os.path.join(_ROOT, DATA_DIR))
@@ -27,7 +24,7 @@ PATH_PRODUCTS = os.path.join(_DATA, "Tovar.xlsx")
 PATH_ORDERS = os.path.join(_DATA, "Заказ_import.xlsx")
 PATH_POINTS = os.path.join(_DATA, "Пункты выдачи_import.xlsx")
 
-# Роль из Excel → значение в БД (users.user_role)
+# Русское название роли в файле → значение в БД (users.user_role)
 ROLE = {"администратор": "administrator", "менеджер": "manager", "клиент": "client"}
 
 
@@ -83,6 +80,15 @@ def get_or_create_pickup_point_id_conn(conn, address: str | None):
     return pid
 
 
+def get_product_id_by_art_cur(cur, art: str) -> int | None:
+    norm = normalize_article(art)
+    if not norm:
+        return None
+    cur.execute("SELECT product_id FROM products WHERE LOWER(TRIM(product_art))=LOWER(%s)", (norm,))
+    r = cur.fetchone()
+    return int(r[0]) if r else None
+
+
 def get_or_create_status_id_conn(conn, name: str | None):
     if not name or not str(name).strip():
         return None
@@ -100,7 +106,7 @@ def get_or_create_status_id_conn(conn, name: str | None):
 
 
 def load_pickup_addresses(path_to_file):
-    """Первый столбец — адреса; индекс 0 = номер 1 в Excel для заказов."""
+    """Первый столбец файла — адреса; строка с индексом 0 соответствует номеру 1 в данных заказов."""
     if not os.path.isfile(path_to_file):
         return []
     df = pd.read_excel(path_to_file, header=None)
@@ -167,7 +173,7 @@ def import_products(connection, path_to_file):
         article = product_row.get("Артикул")
         if pd.isna(article) or not str(article).strip():
             continue
-        article = str(article).strip()
+        article = normalize_article(str(article).strip())
         supplier_id = get_or_create_supplier_id_conn(connection, product_row.get("Поставщик"))
         category_id = get_or_create_category_id_conn(connection, product_row.get("Категория товара"))
         manufacturer = str(product_row.get("Производитель") or "").strip() or None
@@ -200,7 +206,7 @@ def import_products(connection, path_to_file):
     return n
 
 
-def _excel_cell_text(row: pd.Series, *column_names: str):
+def _import_row_cell_text(row: pd.Series, *column_names: str):
     """Первое непустое значение из списка имён колонок."""
     for name in column_names:
         if name not in row.index:
@@ -214,13 +220,13 @@ def _excel_cell_text(row: pd.Series, *column_names: str):
     return None
 
 
-def add_order_items_from_excel_row(cur, order_id: int, order_row: pd.Series) -> int:
+def add_order_items_from_import_row(cur, order_id: int, order_row: pd.Series) -> int:
     """
-    Заполняет order_items из той же строки Excel, что и заказ.
+    Заполняет order_items из той же строки файла заказов.
     Приоритет: текст «артикул, кол-во, …»; иначе «Номер товара» + «Количество».
     """
     n = 0
-    line = _excel_cell_text(
+    line = _import_row_cell_text(
         order_row,
         "Строка заказа",
         "Артикул заказа",
@@ -229,14 +235,13 @@ def add_order_items_from_excel_row(cur, order_id: int, order_row: pd.Series) -> 
     )
     if line:
         for art, qty in parse_order_line_items(line):
-            cur.execute("SELECT product_id FROM products WHERE TRIM(product_art)=%s", (art.strip(),))
-            r = cur.fetchone()
-            if not r:
+            pid = get_product_id_by_art_cur(cur, art)
+            if pid is None:
                 print(f"  заказ {order_id}: артикул «{art}» не найден — позиция пропущена")
                 continue
             cur.execute(
                 "INSERT INTO order_items (order_id, product_id, product_quantity) VALUES (%s, %s, %s)",
-                (order_id, r[0], qty),
+                (order_id, pid, qty),
             )
             n += 1
         return n
@@ -329,7 +334,7 @@ def import_orders(connection, path_to_file, pickup_addresses):
             ),
         )
         order_id = cur.fetchone()[0]
-        k = add_order_items_from_excel_row(cur, order_id, order_row)
+        k = add_order_items_from_import_row(cur, order_id, order_row)
         if k == 0:
             print(f"  заказ {order_id}: нет позиций (добавьте «Строка заказа»/«Артикул заказа» или «Номер товара»)")
         imported += 1

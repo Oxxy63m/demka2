@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import date
 
-from PySide6.QtCore import QDate
+from PySide6.QtCore import QDate, Qt
 from PySide6.QtWidgets import QDialog, QMessageBox, QVBoxLayout
 
 from App.order_service import list_pickup_points, list_statuses, upsert_order
@@ -11,16 +11,29 @@ from App.ui_loader import load_ui
 
 
 class OrderEditWindow(QDialog):
-    def __init__(self, *, order: dict | None, is_admin: bool, on_saved, default_client_name: str = ""):
-        super().__init__()
+    def __init__(
+        self,
+        *,
+        order: dict | None,
+        is_admin: bool,
+        on_saved,
+        default_client_name: str = "",
+        parent=None,
+    ):
+        super().__init__(parent)
+        self.setWindowModality(Qt.WindowModality.ApplicationModal)
         self._order = order
         self._is_admin = is_admin
         self._on_saved = on_saved
         self._default_client_name = (default_client_name or "").strip()
 
         self.ui = load_ui(ui_path("order_form.ui"))
-        self.setWindowTitle(self.ui.windowTitle())
+        self.setWindowTitle(self.ui.windowTitle() if order is not None else "Новый заказ")
         self.setMinimumSize(self.ui.minimumSize())
+        self.resize(self.ui.minimumSize())
+        if is_admin:
+            self.ui.status_combo.setEditable(True)
+            self.ui.pickup_combo.setEditable(True)
         lay = QVBoxLayout(self)
         lay.setContentsMargins(0, 0, 0, 0)
         lay.addWidget(self.ui)
@@ -32,6 +45,7 @@ class OrderEditWindow(QDialog):
         self._load_data()
 
         if not is_admin:
+            self.setWindowTitle("Просмотр заказа")
             self._set_read_only()
 
     def _set_read_only(self):
@@ -58,12 +72,17 @@ class OrderEditWindow(QDialog):
 
     def _load_data(self):
         if self._order is None:
+            self.ui.lbl_id.setVisible(False)
+            self.ui.id_edit.setVisible(False)
             self.ui.id_edit.setText("")
             self.ui.client_edit.setText(self._default_client_name or "")
             self.ui.order_date_edit.setDate(QDate.currentDate())
             self.ui.delivery_date_edit.setDate(QDate.currentDate())
             return
 
+        self.ui.lbl_id.setVisible(True)
+        self.ui.id_edit.setVisible(True)
+        self.ui.id_edit.setReadOnly(True)
         self.ui.id_edit.setText(str(self._order.get("order_id", "")))
         self.ui.client_edit.setText(str(self._order.get("user_name") or "—"))
         self.ui.receiver_edit.setText(str(self._order.get("order_pp_code") or ""))

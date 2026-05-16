@@ -188,14 +188,6 @@
        <bool>true</bool>
       </property>
       <widget class="QWidget" name="cards_container">
-       <property name="geometry">
-        <rect>
-         <x>0</x>
-         <y>0</y>
-         <width>780</width>
-         <height>400</height>
-        </rect>
-       </property>
        <layout class="QVBoxLayout" name="cards_layout">
         <item>
          <spacer name="verticalSpacer">

@@ -26,6 +26,20 @@ def list_categories() -> list[str]:
         return [str(x[0]).strip() for x in s.execute(q).all() if x[0] is not None and str(x[0]).strip()]
 
 
+def list_units() -> list[str]:
+    t = tables()
+    u = t.products.c.product_unit
+    with session() as s:
+        q = (
+            select(u)
+            .where(u.isnot(None))
+            .where(func.trim(u) != "")
+            .group_by(u)
+            .order_by(func.lower(u).asc())
+        )
+        return [str(x[0]).strip() for x in s.execute(q).all() if x[0] is not None and str(x[0]).strip()]
+
+
 def list_manufacturers() -> list[str]:
     t = tables()
     m = t.products.c.product_manufac

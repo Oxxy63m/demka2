@@ -2,51 +2,53 @@ from __future__ import annotations
 
 from functools import partial
 
-from PySide6.QtCore import QObject, Qt, QEvent
-from PySide6.QtGui import QIcon
-from PySide6.QtWidgets import QMainWindow, QMessageBox, QWidget
+from PySide6.QtGui import QFont
+from PySide6.QtWidgets import QMessageBox, QSizePolicy, QVBoxLayout, QWidget
 
 from App.auth_service import ROLE_LABEL, UserContext
 from App.order_service import delete_order, get_order, list_orders
 from App.paths import ui_path
+from App.ui_click import install_card_click
 from App.ui_loader import load_ui
 from App.windows.order_edit_window import OrderEditWindow
 
 
-class _ClickFilter(QObject):
-    def __init__(self, on_click):
-        super().__init__()
-        self._on_click = on_click
-
-    def eventFilter(self, watched, event):
-        if event.type() == QEvent.MouseButtonRelease and event.button() == Qt.LeftButton:
-            self._on_click()
-            return True
-        return False
-
-
-class OrderListWindow(QMainWindow):
+class OrderListWindow(QWidget):
     def __init__(self, *, user: UserContext, on_back):
         super().__init__()
         self._user = user
         self._on_back = on_back
         self._edit_dialog: OrderEditWindow | None = None
 
-        self.ui = load_ui(ui_path("orders_list.ui"))
-        self.setCentralWidget(self.ui.centralwidget)
-        self.setWindowTitle(self.ui.windowTitle())
+        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+
+        shell = load_ui(ui_path("orders_list.ui"))
+        self.ui = shell
+        page = QVBoxLayout(self)
+        page.setContentsMargins(0, 0, 0, 0)
+        page.setSpacing(0)
+        page.addWidget(shell.centralwidget, 1)
+
+        self._setup_scroll_area()
 
         self.ui.btn_back.clicked.connect(self._back)
-        self.ui.btn_add.clicked.connect(self._add)
-        self.ui.btn_del.clicked.connect(self._delete_selected)
+        self.ui.btn_add.clicked.connect(self._add_order)
 
         self._apply_role_ui()
         self._refresh()
 
-        self._selected_order_id: int | None = None
+    def _window(self):
+        return self.window()
 
-    def set_app_icon(self, icon: QIcon):
-        self.setWindowIcon(icon)
+    def _setup_scroll_area(self):
+        self.ui.orders_scroll.setWidgetResizable(True)
+        expand = QSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+        self.ui.orders_scroll.setSizePolicy(expand)
+        lay = self.ui.centralwidget.layout()
+        if lay is not None:
+            idx = lay.indexOf(self.ui.orders_scroll)
+            if idx >= 0:
+                lay.setStretch(idx, 1)
 
     def _apply_role_ui(self):
         role = (self._user.role or "guest").strip()
@@ -55,9 +57,7 @@ class OrderListWindow(QMainWindow):
 
         is_admin = role == "administrator"
         self.ui.btn_add.setVisible(is_admin)
-        self.ui.btn_del.setVisible(is_admin)
         self.ui.btn_add.setEnabled(is_admin)
-        self.ui.btn_del.setEnabled(is_admin)
 
     def _clear_cards(self):
         lay = self.ui.orders_cards_layout
@@ -70,78 +70,93 @@ class OrderListWindow(QMainWindow):
     def _make_card(self, order: dict) -> QWidget:
         card = load_ui(ui_path("order_item.ui"))
         oid = int(order["order_id"])
-        card.lbl_order_article.setText(f"Заказ #{oid}: {order.get('article_summary')}")
-        card.lbl_status.setText(f"Статус: {order.get('status_name') or '—'}")
-        card.lbl_pickup_address.setText(f"Пункт выдачи: {order.get('pp_name') or '—'}")
-        card.lbl_order_date.setText(f"Дата заказа: {order.get('order_date') or '—'}")
-        card.lbl_delivery_date.setText(f"Дата выдачи: {order.get('order_pup_date') or '—'}")
+        articles = str(order.get("article_summary") or "—")
+        status = str(order.get("status_name") or "—")
+        address = str(order.get("pp_name") or "—")
+        order_date = str(order.get("order_date") or "—")
+        delivery = str(order.get("order_pup_date") or "—")
 
-        def select_this():
-            self._selected_order_id = oid
-            # простая подсветка "выбранного" (чтобы Delete работал предсказуемо)
-            for i in range(self.ui.orders_cards_layout.count() - 1):
-                w = self.ui.orders_cards_layout.itemAt(i).widget()
-                if w:
-                    w.setStyleSheet("")
-            card.setStyleSheet("background-color: #F0F0F0;")
+        f = card.lbl_order_article.font()
+        f.setBold(True)
+        card.lbl_order_article.setFont(f)
+        card.lbl_order_article.setText(f"Заказ #{oid}: {articles}")
+        card.lbl_status.setText(f"Статус: {status}")
+        card.lbl_pickup_address.setText(f"Пункт выдачи: {address}")
+        card.lbl_order_date.setText(f"Дата заказа: {order_date}")
+        card.lbl_delivery_date.setText(f"Дата выдачи:\n{delivery}")
 
-        flt = _ClickFilter(select_this)
-        card.installEventFilter(flt)
-        card._flt = flt
+        role = (self._user.role or "").strip()
+        is_admin = role == "administrator"
 
-        # для админа: двойной клик/клик → редактирование (не усложняем: кнопки нет, просто открываем при повторном клике)
-        if (self._user.role or "") == "administrator":
-            def open_edit():
-                self._open_edit(oid)
-            # второй фильтр: по двойному клику
-            card.mouseDoubleClickEvent = lambda _e: open_edit()
+        card.btn_delete.setVisible(is_admin)
+        card.btn_delete.setEnabled(is_admin)
+        card.btn_delete.clicked.connect(partial(self._delete_order, oid))
+
+        if is_admin:
+            install_card_click(card, partial(self._edit_order, oid))
+
+        f_card = card.font()
+        if isinstance(f_card, QFont):
+            f_card.setPointSize(max(8, f_card.pointSize()))
+            card.setFont(f_card)
 
         return card
 
     def _refresh(self):
         self._clear_cards()
-        self._selected_order_id = None
         for o in list_orders():
             self.ui.orders_cards_layout.insertWidget(self.ui.orders_cards_layout.count() - 1, self._make_card(o))
 
-    def _open_edit(self, order_id: int):
+    def _edit_order(self, order_id: int):
         if self._edit_dialog is not None and self._edit_dialog.isVisible():
-            QMessageBox.information(self, "Редактирование", "Окно редактирования уже открыто.")
+            QMessageBox.information(self._window(), "Редактирование", "Окно редактирования уже открыто.")
             return
-        order = get_order(order_id)
-        if not order:
-            QMessageBox.warning(self, "Ошибка", "Заказ не найден.")
-            self._refresh()
-            return
-        self._edit_dialog = OrderEditWindow(order=order, is_admin=True, on_saved=lambda _id: self._refresh())
-        self._edit_dialog.exec()
+        try:
+            order = get_order(order_id)
+            if not order:
+                QMessageBox.warning(self._window(), "Ошибка", "Заказ не найден.")
+                self._refresh()
+                return
+            self._edit_dialog = OrderEditWindow(
+                order=order,
+                is_admin=True,
+                on_saved=lambda _id: self._refresh(),
+                parent=self._window(),
+            )
+            self._edit_dialog.exec()
+        except Exception as e:
+            QMessageBox.critical(self._window(), "Ошибка", str(e))
+        finally:
+            self._edit_dialog = None
 
-    def _add(self):
+    def _add_order(self):
         if self._edit_dialog is not None and self._edit_dialog.isVisible():
-            QMessageBox.information(self, "Добавление", "Окно редактирования уже открыто.")
+            QMessageBox.information(self._window(), "Добавление", "Окно редактирования уже открыто.")
             return
-        self._edit_dialog = OrderEditWindow(
-            order=None,
-            is_admin=True,
-            on_saved=lambda _id: self._refresh(),
-            default_client_name=self._user.full_name or "",
-        )
-        self._edit_dialog.exec()
+        try:
+            self._edit_dialog = OrderEditWindow(
+                order=None,
+                is_admin=True,
+                on_saved=lambda _id: self._refresh(),
+                default_client_name=self._user.full_name or "",
+                parent=self._window(),
+            )
+            self._edit_dialog.exec()
+        except Exception as e:
+            QMessageBox.critical(self._window(), "Ошибка", str(e))
+        finally:
+            self._edit_dialog = None
 
-    def _delete_selected(self):
-        if self._selected_order_id is None:
-            QMessageBox.information(self, "Удаление", "Сначала выберите заказ.")
-            return
-        r = QMessageBox.question(self, "Подтверждение", f"Удалить заказ #{self._selected_order_id}?")
+    def _delete_order(self, order_id: int):
+        r = QMessageBox.question(self._window(), "Подтверждение", "Удалить заказ? Это действие нельзя отменить.")
         if r != QMessageBox.Yes:
             return
         try:
-            delete_order(int(self._selected_order_id))
+            delete_order(int(order_id))
         except Exception as e:
-            QMessageBox.critical(self, "Ошибка", str(e))
+            QMessageBox.warning(self._window(), "Удаление невозможно", str(e))
             return
         self._refresh()
 
     def _back(self):
         self._on_back()
-

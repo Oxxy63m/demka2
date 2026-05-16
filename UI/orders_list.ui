@@ -5,9 +5,6 @@
  <widget class="QMainWindow" name="OrderListWindow">
   <property name="windowTitle"><string>Заказы</string></property>
   <property name="minimumSize"><size><width>720</width><height>520</height></size></property>
-  <property name="windowModality">
-   <enum>Qt::WindowModality::WindowModal</enum>
-  </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QVBoxLayout" name="verticalLayout">
     <item>
@@ -21,8 +18,17 @@
     </item>
     <item>
      <layout class="QHBoxLayout" name="row_buttons">
-      <item><widget class="QPushButton" name="btn_add"><property name="text"><string>Добавить заказ</string></property></widget></item>
-      <item><widget class="QPushButton" name="btn_del"><property name="text"><string>Удалить заказ</string></property></widget></item>
+      <item>
+       <widget class="QPushButton" name="btn_add">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="text"><string>Добавить заказ</string></property>
+       </widget>
+      </item>
      </layout>
     </item>
     <item>

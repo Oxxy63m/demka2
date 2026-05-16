@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import os
 
-# Папка с Excel/картинками/ресурсами (относительно корня проекта).
+# Папка с данными и ресурсами (относительно корня проекта).
 DATA_DIR = "resources"
 
 
