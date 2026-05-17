@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import date
 
-from sqlalchemy import delete, func, select, update
+from sqlalchemy import delete, func, select, text, update
 from sqlalchemy.exc import SQLAlchemyError
 
 from App.db import find_product_id_by_art, order_article_summary, parse_order_line_items, session, tables
@@ -113,6 +113,21 @@ def _get_or_create_status_id(s, name: str | None) -> int | None:
     return int(new_id)
 
 
+def _sync_orders_id_sequence(s) -> None:
+    """После импорта с явными ID выравнивает serial, чтобы новый заказ не дублировал ключ."""
+    s.execute(
+        text(
+            """
+            SELECT setval(
+                pg_get_serial_sequence('orders', 'order_id'),
+                COALESCE((SELECT MAX(order_id) FROM orders), 0),
+                true
+            )
+            """
+        )
+    )
+
+
 def _get_or_create_pickup_id(s, address: str | None) -> int | None:
     t = tables()
     if not address or not str(address).strip():
@@ -163,6 +178,7 @@ def upsert_order(
             }
 
             if order_id is None:
+                _sync_orders_id_sequence(s)
                 new_id = s.execute(t.orders.insert().values(payload).returning(t.orders.c.order_id)).scalar_one()
                 order_id = int(new_id)
             else:

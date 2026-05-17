@@ -4,12 +4,20 @@
  <class>OrderEditWindow</class>
  <widget class="QDialog" name="OrderEditWindow">
   <property name="windowTitle"><string>Заказ</string></property>
-  <property name="minimumSize"><size><width>560</width><height>480</height></size></property>
+  <property name="minimumSize"><size><width>720</width><height>580</height></size></property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
     <widget class="QGroupBox" name="left_group">
      <property name="title"><string>Данные заказа</string></property>
      <layout class="QFormLayout" name="formLayout">
+      <property name="horizontalSpacing"><number>14</number></property>
+      <property name="verticalSpacing"><number>10</number></property>
+      <property name="fieldGrowthPolicy">
+       <enum>QFormLayout::FieldGrowthPolicy::ExpandingFieldsGrow</enum>
+      </property>
+      <property name="labelAlignment">
+       <set>Qt::AlignmentFlag::AlignLeft</set>
+      </property>
       <item row="0" column="0"><widget class="QLabel" name="lbl_id"><property name="text"><string>ID:</string></property><property name="wordWrap"><bool>true</bool></property></widget></item>
       <item row="0" column="1"><widget class="QLineEdit" name="id_edit"><property name="readOnly"><bool>true</bool></property></widget></item>
       <item row="1" column="0"><widget class="QLabel" name="lbl_article"><property name="text"><string>Артикул:</string></property><property name="wordWrap"><bool>true</bool></property></widget></item>
@@ -18,7 +26,7 @@
       <item row="3" column="0"><widget class="QLabel" name="lbl_status"><property name="text"><string>Статус заказа:</string></property><property name="wordWrap"><bool>true</bool></property></widget></item>
       <item row="3" column="1"><widget class="QComboBox" name="status_combo"/></item>
       <item row="4" column="0"><widget class="QLabel" name="lbl_pickup"><property name="text"><string>Адрес пункта выдачи:</string></property><property name="wordWrap"><bool>true</bool></property></widget></item>
-      <item row="4" column="1"><widget class="QComboBox" name="pickup_combo"/></item>
+      <item row="4" column="1"><widget class="QComboBox" name="pickup_combo"><property name="minimumSize"><size><width>360</width><height>28</height></size></property></widget></item>
       <item row="5" column="0"><widget class="QLabel" name="lbl_order_date"><property name="text"><string>Дата заказа:</string></property><property name="wordWrap"><bool>true</bool></property></widget></item>
       <item row="5" column="1"><widget class="QDateEdit" name="order_date_edit"><property name="calendarPopup"><bool>true</bool></property></widget></item>
       <item row="6" column="0"><widget class="QLabel" name="lbl_receiver"><property name="text"><string>Код для получения:</string></property><property name="wordWrap"><bool>true</bool></property></widget></item>
@@ -32,6 +40,11 @@
     <widget class="QGroupBox" name="right_group">
      <property name="title"><string>Выдача</string></property>
      <layout class="QFormLayout" name="right_form">
+      <property name="horizontalSpacing"><number>14</number></property>
+      <property name="verticalSpacing"><number>10</number></property>
+      <property name="fieldGrowthPolicy">
+       <enum>QFormLayout::FieldGrowthPolicy::ExpandingFieldsGrow</enum>
+      </property>
       <item row="0" column="0"><widget class="QLabel" name="lbl_delivery"><property name="text"><string>Дата выдачи:</string></property><property name="wordWrap"><bool>true</bool></property></widget></item>
       <item row="0" column="1"><widget class="QDateEdit" name="delivery_date_edit"><property name="calendarPopup"><bool>true</bool></property></widget></item>
      </layout>

@@ -5,7 +5,7 @@ import re
 from dataclasses import dataclass
 from typing import Iterable
 
-from sqlalchemy import MetaData, Table, create_engine, select, text
+from sqlalchemy import MetaData, Table, create_engine, func, select, text
 from sqlalchemy.engine import Engine
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session, sessionmaker

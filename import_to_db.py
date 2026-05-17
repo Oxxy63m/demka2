@@ -338,6 +338,15 @@ def import_orders(connection, path_to_file, pickup_addresses):
         if k == 0:
             print(f"  заказ {order_id}: нет позиций (добавьте «Строка заказа»/«Артикул заказа» или «Номер товара»)")
         imported += 1
+    cur.execute(
+        """
+        SELECT setval(
+            pg_get_serial_sequence('orders', 'order_id'),
+            COALESCE((SELECT MAX(order_id) FROM orders), 0),
+            true
+        )
+        """
+    )
     cur.close()
     print(f"Импортировано заказов: {imported}")
     return imported

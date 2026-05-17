@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import date
 
 from PySide6.QtCore import QDate, Qt
-from PySide6.QtWidgets import QDialog, QMessageBox, QVBoxLayout
+from PySide6.QtWidgets import QDialog, QFormLayout, QMessageBox, QSizePolicy, QVBoxLayout
 
 from App.order_service import list_pickup_points, list_statuses, upsert_order
 from App.paths import ui_path
@@ -30,7 +30,8 @@ class OrderEditWindow(QDialog):
         self.ui = load_ui(ui_path("order_form.ui"))
         self.setWindowTitle(self.ui.windowTitle() if order is not None else "Новый заказ")
         self.setMinimumSize(self.ui.minimumSize())
-        self.resize(self.ui.minimumSize())
+        self.resize(740, 600)
+        self._tune_form_layout()
         if is_admin:
             self.ui.status_combo.setEditable(True)
             self.ui.pickup_combo.setEditable(True)
@@ -47,6 +48,30 @@ class OrderEditWindow(QDialog):
         if not is_admin:
             self.setWindowTitle("Просмотр заказа")
             self._set_read_only()
+
+    def _tune_form_layout(self):
+        for fl in (self.ui.formLayout, self.ui.right_form):
+            fl.setFieldGrowthPolicy(QFormLayout.FieldGrowthPolicy.ExpandingFieldsGrow)
+            fl.setLabelAlignment(Qt.AlignmentFlag.AlignLeft)
+            fl.setFormAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
+            fl.setHorizontalSpacing(14)
+            fl.setVerticalSpacing(10)
+        for lbl in (
+            self.ui.lbl_id,
+            self.ui.lbl_article,
+            self.ui.lbl_status,
+            self.ui.lbl_pickup,
+            self.ui.lbl_order_date,
+            self.ui.lbl_receiver,
+            self.ui.lbl_client,
+            self.ui.lbl_delivery,
+        ):
+            lbl.setMinimumWidth(170)
+            lbl.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Preferred)
+        self.ui.pickup_combo.setMinimumWidth(380)
+        self.ui.client_edit.setMinimumWidth(380)
+        self.ui.status_combo.setMinimumWidth(220)
+        self.ui.article_edit.setMinimumHeight(88)
 
     def _set_read_only(self):
         self.ui.btn_save.setEnabled(False)
