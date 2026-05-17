@@ -114,13 +114,28 @@ def _get_or_create_status_id(s, name: str | None) -> int | None:
 
 
 def _sync_orders_id_sequence(s) -> None:
-    """После импорта с явными ID выравнивает serial, чтобы новый заказ не дублировал ключ."""
+    """После импорта с явными ID выравнивает serial для orders."""
     s.execute(
         text(
             """
             SELECT setval(
                 pg_get_serial_sequence('orders', 'order_id'),
                 COALESCE((SELECT MAX(order_id) FROM orders), 0),
+                true
+            )
+            """
+        )
+    )
+
+
+def _sync_order_items_id_sequence(s) -> None:
+    """После импорта выравнивает serial для order_items (иначе duplicate key на order_item_id)."""
+    s.execute(
+        text(
+            """
+            SELECT setval(
+                pg_get_serial_sequence('order_items', 'order_item_id'),
+                COALESCE((SELECT MAX(order_item_id) FROM order_items), 0),
                 true
             )
             """
@@ -184,8 +199,9 @@ def upsert_order(
             else:
                 s.execute(update(t.orders).where(t.orders.c.order_id == order_id).values(payload))
 
-            # позиции: полностью пересоздаём
+            # позиции: полностью пересоздаём (редактирование и новый заказ)
             s.execute(delete(t.order_items).where(t.order_items.c.order_id == order_id))
+            _sync_order_items_id_sequence(s)
             pairs = parse_order_line_items(items_text)
             if not pairs:
                 if (items_text or "").strip():

@@ -138,9 +138,8 @@ class OrderEditWindow(QDialog):
 
     def _save(self):
         try:
-            oid = None
-            if self.ui.id_edit.text().strip():
-                oid = int(self.ui.id_edit.text().strip())
+            # Новый заказ — без ID; редактирование — ID существующей записи
+            oid = None if self._order is None else int(self._order["order_id"])
 
             od_q = self.ui.order_date_edit.date()
             dd_q = self.ui.delivery_date_edit.date()

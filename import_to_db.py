@@ -347,6 +347,15 @@ def import_orders(connection, path_to_file, pickup_addresses):
         )
         """
     )
+    cur.execute(
+        """
+        SELECT setval(
+            pg_get_serial_sequence('order_items', 'order_item_id'),
+            COALESCE((SELECT MAX(order_item_id) FROM order_items), 0),
+            true
+        )
+        """
+    )
     cur.close()
     print(f"Импортировано заказов: {imported}")
     return imported
